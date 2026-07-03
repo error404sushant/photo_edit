@@ -101,9 +101,21 @@ ColorMatrix hueMatrix(double v) {
   final a = v * math.pi;
   final c = math.cos(a), s = math.sin(a);
   return [
-    0.213 + c * 0.787 - s * 0.213, 0.715 - c * 0.715 - s * 0.715, 0.072 - c * 0.072 + s * 0.928, 0, 0, //
-    0.213 - c * 0.213 + s * 0.143, 0.715 + c * 0.285 + s * 0.140, 0.072 - c * 0.072 - s * 0.283, 0, 0, //
-    0.213 - c * 0.213 - s * 0.787, 0.715 - c * 0.715 + s * 0.715, 0.072 + c * 0.928 + s * 0.072, 0, 0, //
+    0.213 + c * 0.787 - s * 0.213,
+    0.715 - c * 0.715 - s * 0.715,
+    0.072 - c * 0.072 + s * 0.928,
+    0,
+    0, //
+    0.213 - c * 0.213 + s * 0.143,
+    0.715 + c * 0.285 + s * 0.140,
+    0.072 - c * 0.072 - s * 0.283,
+    0,
+    0, //
+    0.213 - c * 0.213 - s * 0.787,
+    0.715 - c * 0.715 + s * 0.715,
+    0.072 + c * 0.928 + s * 0.072,
+    0,
+    0, //
     0, 0, 0, 1, 0, //
   ];
 }
@@ -142,19 +154,77 @@ class FilterPreset {
 
 final List<FilterPreset> filterPresets = [
   const FilterPreset('Original', identityMatrix),
-  FilterPreset('Vivid', composeAll([saturationMatrix(0.35), contrastMatrix(0.12)])),
-  FilterPreset('Pop', composeAll([saturationMatrix(0.55), contrastMatrix(0.22), brightnessMatrix(0.04)])),
-  FilterPreset('Warm', composeAll([warmthMatrix(0.45), brightnessMatrix(0.03)])),
-  FilterPreset('Golden', composeAll([warmthMatrix(0.35), sepiaMatrix(0.25), contrastMatrix(0.08)])),
-  FilterPreset('Cool', composeAll([warmthMatrix(-0.45), brightnessMatrix(0.02)])),
-  FilterPreset('Arctic', composeAll([warmthMatrix(-0.35), saturationMatrix(-0.2), brightnessMatrix(0.08)])),
-  FilterPreset('Cinema', composeAll([warmthMatrix(0.18), tintMatrix(-0.12), contrastMatrix(0.18), saturationMatrix(-0.08)])),
-  FilterPreset('Retro', composeAll([sepiaMatrix(0.45), contrastMatrix(-0.1), brightnessMatrix(0.05)])),
+  FilterPreset(
+    'Vivid',
+    composeAll([saturationMatrix(0.35), contrastMatrix(0.12)]),
+  ),
+  FilterPreset(
+    'Pop',
+    composeAll([
+      saturationMatrix(0.55),
+      contrastMatrix(0.22),
+      brightnessMatrix(0.04),
+    ]),
+  ),
+  FilterPreset(
+    'Warm',
+    composeAll([warmthMatrix(0.45), brightnessMatrix(0.03)]),
+  ),
+  FilterPreset(
+    'Golden',
+    composeAll([warmthMatrix(0.35), sepiaMatrix(0.25), contrastMatrix(0.08)]),
+  ),
+  FilterPreset(
+    'Cool',
+    composeAll([warmthMatrix(-0.45), brightnessMatrix(0.02)]),
+  ),
+  FilterPreset(
+    'Arctic',
+    composeAll([
+      warmthMatrix(-0.35),
+      saturationMatrix(-0.2),
+      brightnessMatrix(0.08),
+    ]),
+  ),
+  FilterPreset(
+    'Cinema',
+    composeAll([
+      warmthMatrix(0.18),
+      tintMatrix(-0.12),
+      contrastMatrix(0.18),
+      saturationMatrix(-0.08),
+    ]),
+  ),
+  FilterPreset(
+    'Retro',
+    composeAll([
+      sepiaMatrix(0.45),
+      contrastMatrix(-0.1),
+      brightnessMatrix(0.05),
+    ]),
+  ),
   FilterPreset('Fade', composeAll([fadeMatrix(0.6), saturationMatrix(-0.15)])),
   FilterPreset('Mono', grayscaleMatrix(1)),
   FilterPreset('Noir', composeAll([grayscaleMatrix(1), contrastMatrix(0.35)])),
-  FilterPreset('Silver', composeAll([grayscaleMatrix(1), brightnessMatrix(0.1), fadeMatrix(0.25)])),
+  FilterPreset(
+    'Silver',
+    composeAll([grayscaleMatrix(1), brightnessMatrix(0.1), fadeMatrix(0.25)]),
+  ),
   FilterPreset('Sepia', sepiaMatrix(0.9)),
-  FilterPreset('Rose', composeAll([tintMatrix(0.3), brightnessMatrix(0.05), saturationMatrix(0.1)])),
-  FilterPreset('Forest', composeAll([tintMatrix(-0.3), saturationMatrix(0.15), contrastMatrix(0.08)])),
+  FilterPreset(
+    'Rose',
+    composeAll([
+      tintMatrix(0.3),
+      brightnessMatrix(0.05),
+      saturationMatrix(0.1),
+    ]),
+  ),
+  FilterPreset(
+    'Forest',
+    composeAll([
+      tintMatrix(-0.3),
+      saturationMatrix(0.15),
+      contrastMatrix(0.08),
+    ]),
+  ),
 ];

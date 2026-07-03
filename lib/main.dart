@@ -45,9 +45,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _openEditor(ui.Image image) async {
     if (!mounted) return;
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => EditorScreen(image: image)),
-    );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => EditorScreen(image: image)));
   }
 
   Future<void> _pickImage() async {
@@ -60,8 +60,9 @@ class _HomeScreenState extends State<HomeScreen> {
       await _openEditor(image);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Could not open image: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not open image: $e')));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -91,14 +92,16 @@ class _HomeScreenState extends State<HomeScreen> {
         const Offset(w * 0.72, h * 0.3),
         130,
         Paint()
-          ..shader = ui.Gradient.radial(
-            const Offset(w * 0.72, h * 0.3),
-            160,
-            [const Color(0xFFFFF176), const Color(0x00FFF176)],
-          ),
+          ..shader = ui.Gradient.radial(const Offset(w * 0.72, h * 0.3), 160, [
+            const Color(0xFFFFF176),
+            const Color(0x00FFF176),
+          ]),
       );
-      canvas.drawCircle(const Offset(w * 0.72, h * 0.3), 90,
-          Paint()..color = const Color(0xFFFFF59D));
+      canvas.drawCircle(
+        const Offset(w * 0.72, h * 0.3),
+        90,
+        Paint()..color = const Color(0xFFFFF59D),
+      );
       // Mountain silhouettes
       final rng = math.Random(7);
       for (var layer = 0; layer < 3; layer++) {
@@ -119,9 +122,11 @@ class _HomeScreenState extends State<HomeScreen> {
         canvas.drawPath(
           path,
           Paint()
-            ..color = Color.lerp(const Color(0xFF0D1B4C),
-                    const Color(0xFF3E1F47), layer / 2)!
-                .withValues(alpha: 0.85),
+            ..color = Color.lerp(
+              const Color(0xFF0D1B4C),
+              const Color(0xFF3E1F47),
+              layer / 2,
+            )!.withValues(alpha: 0.85),
         );
       }
       final picture = recorder.endRecording();
@@ -148,8 +153,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   colors: [Color(0xFF7C4DFF), Color(0xFF00BCD4)],
                 ),
               ),
-              child:
-                  const Icon(Icons.photo_filter, size: 48, color: Colors.white),
+              child: const Icon(
+                Icons.photo_filter,
+                size: 48,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 24),
             Text(
@@ -171,8 +179,10 @@ class _HomeScreenState extends State<HomeScreen> {
               FilledButton.icon(
                 onPressed: _pickImage,
                 style: FilledButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 16,
+                  ),
                 ),
                 icon: const Icon(Icons.add_photo_alternate_outlined),
                 label: const Text('Open a photo'),

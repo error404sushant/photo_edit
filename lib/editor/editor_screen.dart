@@ -12,6 +12,7 @@ import 'crop_overlay.dart';
 import 'painters.dart';
 
 enum Tool {
+  looks('Looks', Icons.auto_awesome_mosaic),
   filters('Filters', Icons.auto_awesome),
   adjust('Adjust', Icons.tune),
   selective('Selective', Icons.center_focus_strong),
@@ -104,8 +105,9 @@ class _EditorScreenState extends State<EditorScreen> {
   final List<EditSnapshot> _undoStack = [];
   final List<EditSnapshot> _redoStack = [];
 
-  Tool _tool = Tool.filters;
+  Tool _tool = Tool.looks;
   AdjustType _adjust = AdjustType.brightness;
+  int? _selectedLook;
   int? _selectedItem;
   bool _comparing = false;
   bool _saving = false;
@@ -150,6 +152,9 @@ class _EditorScreenState extends State<EditorScreen> {
     _undoStack.add(edit.copy());
     _redoStack.clear();
     if (_undoStack.length > 60) _undoStack.removeAt(0);
+    // Any new edit invalidates the applied-template highlight; _applyLook
+    // re-sets it right after pushing.
+    _selectedLook = null;
   }
 
   void _undo() {
@@ -228,30 +233,50 @@ class _EditorScreenState extends State<EditorScreen> {
 
   // ----------------------------------------------------------------- build
 
+  bool get _wide => MediaQuery.sizeOf(context).width >= 1000;
+
   @override
   Widget build(BuildContext context) {
+    final canvas = Padding(
+      padding: const EdgeInsets.all(12),
+      child: Center(
+        child: AspectRatio(
+          aspectRatio: _canvasAspect,
+          child: _tool == Tool.crop ? _buildCropCanvas() : _buildCanvas(),
+        ),
+      ),
+    );
     return Scaffold(
       backgroundColor: const Color(0xFF101014),
       appBar: _buildAppBar(),
-      body: Column(
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Center(
-                child: AspectRatio(
-                  aspectRatio: _canvasAspect,
-                  child: _tool == Tool.crop
-                      ? _buildCropCanvas()
-                      : _buildCanvas(),
+      body: _wide
+          ? Column(
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Expanded(child: canvas),
+                      Container(
+                        width: 360,
+                        color: const Color(0xFF1C1C24),
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          child: _buildPanel(),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                _buildToolBar(),
+              ],
+            )
+          : Column(
+              children: [
+                Expanded(child: canvas),
+                _buildPanel(),
+                _buildToolBar(),
+              ],
             ),
-          ),
-          _buildPanel(),
-          _buildToolBar(),
-        ],
-      ),
     );
   }
 
@@ -664,6 +689,7 @@ class _EditorScreenState extends State<EditorScreen> {
 
   Widget _buildPanel() {
     final Widget child = switch (_tool) {
+      Tool.looks => _looksPanel(),
       Tool.filters => _filterPanel(),
       Tool.adjust => _adjustPanel(),
       Tool.selective => _selectivePanel(),
@@ -672,6 +698,7 @@ class _EditorScreenState extends State<EditorScreen> {
       Tool.text => _textPanel(),
       Tool.stickers => _stickerPanel(),
     };
+    if (_wide) return child;
     return Container(
       color: const Color(0xFF1C1C24),
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -679,9 +706,134 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
+  // Looks (templates) ---------------------------------------------------------
+
+  void _applyLook(int index) {
+    final look = kLookTemplates[index];
+    _push();
+    setState(() {
+      edit = EditSnapshot(
+        adjustments: {
+          for (final t in AdjustType.values) t: look.adjustments[t] ?? 0.0,
+        },
+        filterIndex: look.filterIndex,
+        filterStrength: look.filterStrength,
+        quarterTurns: edit.quarterTurns,
+        flipH: edit.flipH,
+        flipV: edit.flipV,
+        crop: edit.crop,
+        strokes: edit.strokes,
+        items: edit.items,
+        spots: edit.spots,
+      );
+      _selectedLook = index;
+    });
+  }
+
+  Widget _lookThumb(int i) {
+    final look = kLookTemplates[i];
+    final selected = _selectedLook == i;
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: selected ? Colors.lightBlueAccent : Colors.white12,
+          width: selected ? 2 : 1,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          CustomPaint(
+            painter: FilteredImagePainter(
+              image: widget.image,
+              matrix: look.matrix,
+              blur: 0,
+              quarterTurns: 0,
+              flipH: false,
+              flipV: false,
+              crop: _thumbCrop(),
+            ),
+          ),
+          if (look.vignette > 0)
+            CustomPaint(painter: VignettePainter(look.vignette)),
+        ],
+      ),
+    );
+  }
+
+  Widget _lookCard(int i, {double? size}) {
+    final look = kLookTemplates[i];
+    final selected = _selectedLook == i;
+    final thumb = size != null
+        ? SizedBox(width: size, height: size, child: _lookThumb(i))
+        : Expanded(child: _lookThumb(i));
+    return GestureDetector(
+      onTap: () => _applyLook(i),
+      child: Column(
+        mainAxisSize: size != null ? MainAxisSize.min : MainAxisSize.max,
+        children: [
+          thumb,
+          const SizedBox(height: 4),
+          Text(
+            look.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11,
+              color: selected ? Colors.lightBlueAccent : Colors.white70,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _looksPanel() {
+    if (_wide) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: Text(
+              'One-tap templates',
+              style: TextStyle(fontSize: 13, color: Colors.white70),
+            ),
+          ),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 10,
+              childAspectRatio: 0.8,
+            ),
+            itemCount: kLookTemplates.length,
+            itemBuilder: (context, i) => _lookCard(i),
+          ),
+        ],
+      );
+    }
+    return SizedBox(
+      height: 118,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: kLookTemplates.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
+        itemBuilder: (context, i) => _lookCard(i, size: 86),
+      ),
+    );
+  }
+
   // Filters -----------------------------------------------------------------
 
   Widget _filterPanel() {
+    if (_wide) return _filterPanelGrid();
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -771,6 +923,106 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
+  /// Desktop layout: filter presets in a grid with the strength slider.
+  Widget _filterPanelGrid() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 0, 16, 10),
+          child: Text(
+            'Filters',
+            style: TextStyle(fontSize: 13, color: Colors.white70),
+          ),
+        ),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 10,
+            childAspectRatio: 0.8,
+          ),
+          itemCount: filterPresets.length,
+          itemBuilder: (context, i) {
+            final preset = filterPresets[i];
+            final selected = edit.filterIndex == i;
+            return GestureDetector(
+              onTap: () {
+                _push();
+                setState(() => edit = edit.copyWith(filterIndex: i));
+              },
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: selected
+                              ? Colors.lightBlueAccent
+                              : Colors.white12,
+                          width: selected ? 2 : 1,
+                        ),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: CustomPaint(
+                        painter: FilteredImagePainter(
+                          image: widget.image,
+                          matrix: preset.matrix,
+                          blur: 0,
+                          quarterTurns: 0,
+                          flipH: false,
+                          flipV: false,
+                          crop: _thumbCrop(),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    preset.name,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: selected ? Colors.lightBlueAccent : Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        if (edit.filterIndex != 0)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+            child: Row(
+              children: [
+                const Text(
+                  'Strength',
+                  style: TextStyle(fontSize: 12, color: Colors.white70),
+                ),
+                Expanded(
+                  child: Slider(
+                    value: edit.filterStrength,
+                    onChangeStart: (_) => _push(),
+                    onChanged: (v) =>
+                        setState(() => edit = edit.copyWith(filterStrength: v)),
+                  ),
+                ),
+                Text(
+                  '${(edit.filterStrength * 100).round()}%',
+                  style: const TextStyle(fontSize: 12, color: Colors.white70),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
   /// Square center crop for filter thumbnails.
   Rect _thumbCrop() {
     final w = widget.image.width.toDouble();
@@ -786,6 +1038,7 @@ class _EditorScreenState extends State<EditorScreen> {
   // Adjust ------------------------------------------------------------------
 
   Widget _adjustPanel() {
+    if (_wide) return _adjustPanelVertical();
     final value = edit.adjustments[_adjust]!;
     final oneSided = _adjust.isOneSided;
     return Column(
@@ -886,6 +1139,97 @@ class _EditorScreenState extends State<EditorScreen> {
             ],
           ),
         ),
+      ],
+    );
+  }
+
+  /// Desktop layout: every adjustment stacked with its own slider.
+  Widget _adjustPanelVertical() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 8, 4),
+          child: Row(
+            children: [
+              const Text(
+                'Adjustments',
+                style: TextStyle(fontSize: 13, color: Colors.white70),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: edit.adjustments.values.any((v) => v.abs() > 0.001)
+                    ? () {
+                        _push();
+                        setState(() {
+                          for (final t in AdjustType.values) {
+                            edit.adjustments[t] = 0;
+                          }
+                        });
+                      }
+                    : null,
+                child: const Text('Reset all', style: TextStyle(fontSize: 12)),
+              ),
+            ],
+          ),
+        ),
+        for (final type in AdjustType.values)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(type.icon, size: 17, color: Colors.white70),
+                    const SizedBox(width: 8),
+                    Text(
+                      type.label,
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      type.isOneSided
+                          ? '${(edit.adjustments[type]! * 100).round()}'
+                          : '${edit.adjustments[type]! >= 0 ? '+' : ''}'
+                                '${(edit.adjustments[type]! * 100).round()}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: edit.adjustments[type]!.abs() > 0.001
+                            ? Colors.amberAccent
+                            : Colors.white38,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: 30,
+                  child: SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      trackHeight: 2.5,
+                      thumbShape: const RoundSliderThumbShape(
+                        enabledThumbRadius: 7,
+                      ),
+                      overlayShape: const RoundSliderOverlayShape(
+                        overlayRadius: 14,
+                      ),
+                    ),
+                    child: Slider(
+                      value: edit.adjustments[type]!,
+                      min: type.isOneSided ? 0 : -1,
+                      max: 1,
+                      onChangeStart: (_) => _push(),
+                      onChanged: (v) =>
+                          setState(() => edit.adjustments[type] = v),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }
@@ -1543,6 +1887,38 @@ class _EditorScreenState extends State<EditorScreen> {
 
   Widget _stickerPanel() {
     final item = _selected?.kind == OverlayKind.sticker ? _selected : null;
+    if (_wide) {
+      return Column(
+        children: [
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 6,
+              mainAxisSpacing: 6,
+              crossAxisSpacing: 6,
+            ),
+            itemCount: kStickers.length,
+            itemBuilder: (context, i) => InkWell(
+              onTap: () {
+                _push();
+                setState(() {
+                  edit.items.add(
+                    OverlayItem(kind: OverlayKind.sticker, text: kStickers[i]),
+                  );
+                  _selectedItem = edit.items.length - 1;
+                });
+              },
+              child: Center(
+                child: Text(kStickers[i], style: const TextStyle(fontSize: 28)),
+              ),
+            ),
+          ),
+          if (item != null) _itemActionsRow(item),
+        ],
+      );
+    }
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [

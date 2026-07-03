@@ -26,19 +26,18 @@ class _CropOverlayState extends State<CropOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      final size = Size(constraints.maxWidth, constraints.maxHeight);
-      return GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onPanStart: (d) => _mode = _hitTest(d.localPosition, size),
-        onPanUpdate: (d) => _onDrag(d.delta, size),
-        onPanEnd: (_) => _mode = _DragMode.none,
-        child: CustomPaint(
-          size: size,
-          painter: _CropPainter(widget.rect),
-        ),
-      );
-    });
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = Size(constraints.maxWidth, constraints.maxHeight);
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onPanStart: (d) => _mode = _hitTest(d.localPosition, size),
+          onPanUpdate: (d) => _onDrag(d.delta, size),
+          onPanEnd: (_) => _mode = _DragMode.none,
+          child: CustomPaint(size: size, painter: _CropPainter(widget.rect)),
+        );
+      },
+    );
   }
 
   _DragMode _hitTest(Offset pos, Size size) {
@@ -57,13 +56,17 @@ class _CropOverlayState extends State<CropOverlay> {
     if ((pos.dx - r.left).abs() < grab && pos.dy > r.top && pos.dy < r.bottom) {
       return _DragMode.left;
     }
-    if ((pos.dx - r.right).abs() < grab && pos.dy > r.top && pos.dy < r.bottom) {
+    if ((pos.dx - r.right).abs() < grab &&
+        pos.dy > r.top &&
+        pos.dy < r.bottom) {
       return _DragMode.right;
     }
     if ((pos.dy - r.top).abs() < grab && pos.dx > r.left && pos.dx < r.right) {
       return _DragMode.top;
     }
-    if ((pos.dy - r.bottom).abs() < grab && pos.dx > r.left && pos.dx < r.right) {
+    if ((pos.dy - r.bottom).abs() < grab &&
+        pos.dx > r.left &&
+        pos.dx < r.right) {
       return _DragMode.bottom;
     }
     if (r.contains(pos)) return _DragMode.move;

@@ -138,7 +138,10 @@ class SpotsPainter extends CustomPainter {
     final bounds = Offset.zero & size;
     for (final spot in spots) {
       if (!spot.hasEffect) continue;
-      final center = Offset(spot.pos.dx * size.width, spot.pos.dy * size.height);
+      final center = Offset(
+        spot.pos.dx * size.width,
+        spot.pos.dy * size.height,
+      );
       final radius = spot.radius * size.shortestSide;
       // Spot adjustments apply on top of the global filter chain.
       final combined = multiplyMatrices(spot.matrix, globalMatrix);
@@ -183,8 +186,10 @@ class SpotOutlinePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     for (var i = 0; i < spots.length; i++) {
       final spot = spots[i];
-      final center =
-          Offset(spot.pos.dx * size.width, spot.pos.dy * size.height);
+      final center = Offset(
+        spot.pos.dx * size.width,
+        spot.pos.dy * size.height,
+      );
       final radius = spot.radius * size.shortestSide;
       final color = i == selected ? Colors.lightBlueAccent : Colors.white70;
       final paint = Paint()
@@ -222,10 +227,7 @@ class VignettePainter extends CustomPainter {
       ..shader = ui.Gradient.radial(
         rect.center,
         size.longestSide * 0.75,
-        [
-          Colors.transparent,
-          Colors.black.withValues(alpha: strength * 0.85),
-        ],
+        [Colors.transparent, Colors.black.withValues(alpha: strength * 0.85)],
         [1 - strength * 0.55, 1.0],
       );
     canvas.drawRect(rect, paint);
@@ -251,15 +253,19 @@ class StrokesPainter extends CustomPainter {
         ..strokeJoin = StrokeJoin.round
         ..style = PaintingStyle.stroke;
       if (stroke.points.length == 1) {
-        canvas.drawPoints(
-          ui.PointMode.points,
-          [Offset(stroke.points[0].dx * size.width, stroke.points[0].dy * size.height)],
-          paint..strokeCap = StrokeCap.round,
-        );
+        canvas.drawPoints(ui.PointMode.points, [
+          Offset(
+            stroke.points[0].dx * size.width,
+            stroke.points[0].dy * size.height,
+          ),
+        ], paint..strokeCap = StrokeCap.round);
         continue;
       }
       final path = Path()
-        ..moveTo(stroke.points[0].dx * size.width, stroke.points[0].dy * size.height);
+        ..moveTo(
+          stroke.points[0].dx * size.width,
+          stroke.points[0].dy * size.height,
+        );
       for (final p in stroke.points.skip(1)) {
         path.lineTo(p.dx * size.width, p.dy * size.height);
       }

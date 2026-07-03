@@ -6,6 +6,7 @@ A full-featured photo editing app built with **Flutter**, running entirely in th
 
 | Tool | What it does |
 |------|--------------|
+| **Looks** | 16 professionally-tuned templates (Auto Pop, Golden Hour, Portrait Glow, Teal & Orange, HDR Crisp, Moody, Film 35mm, Dreamy, Night Boost…) that apply a complete style — filter, tone, color and vignette — in one tap, with live previews of your photo |
 | **Filters** | 16 one-tap presets (Vivid, Pop, Warm, Golden, Cool, Arctic, Cinema, Retro, Fade, Mono, Noir, Silver, Sepia, Rose, Forest) with live thumbnails and an intensity slider |
 | **Adjust** | Brightness, Exposure, Contrast, Saturation, Warmth, Tint, Hue, Fade, Vignette, Blur — each with its own slider and per-control reset |
 | **AI Enhance** | One-tap auto-fix (the ✨ wand in the top bar). Analyzes the photo's histogram — exposure, shadows, tonal spread, color dullness, color cast — and applies balanced corrections automatically |
