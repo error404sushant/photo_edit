@@ -254,6 +254,7 @@ class _EditorScreenState extends State<EditorScreen> {
               children: [
                 Expanded(
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Expanded(child: canvas),
                       Container(
@@ -968,15 +969,17 @@ class _EditorScreenState extends State<EditorScreen> {
                         ),
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: CustomPaint(
-                        painter: FilteredImagePainter(
-                          image: widget.image,
-                          matrix: preset.matrix,
-                          blur: 0,
-                          quarterTurns: 0,
-                          flipH: false,
-                          flipV: false,
-                          crop: _thumbCrop(),
+                      child: SizedBox.expand(
+                        child: CustomPaint(
+                          painter: FilteredImagePainter(
+                            image: widget.image,
+                            matrix: preset.matrix,
+                            blur: 0,
+                            quarterTurns: 0,
+                            flipH: false,
+                            flipV: false,
+                            crop: _thumbCrop(),
+                          ),
                         ),
                       ),
                     ),
@@ -1495,32 +1498,38 @@ class _EditorScreenState extends State<EditorScreen> {
   ];
 
   Widget _cropPanel() {
+    final chips = [
+      for (final (label, ratio) in _aspectOptions)
+        ChoiceChip(
+          label: Text(label),
+          selected: _cropAspect == ratio,
+          onSelected: (_) => setState(() {
+            _cropAspect = ratio;
+            if (ratio != null) {
+              _cropDraft = _fitAspect(ratio);
+            }
+          }),
+        ),
+    ];
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(
-          height: 40,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: _aspectOptions.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 8),
-            itemBuilder: (context, i) {
-              final (label, ratio) = _aspectOptions[i];
-              final selected = _cropAspect == ratio;
-              return ChoiceChip(
-                label: Text(label),
-                selected: selected,
-                onSelected: (_) => setState(() {
-                  _cropAspect = ratio;
-                  if (ratio != null) {
-                    _cropDraft = _fitAspect(ratio);
-                  }
-                }),
-              );
-            },
+        if (_wide)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Wrap(spacing: 8, runSpacing: 8, children: chips),
+          )
+        else
+          SizedBox(
+            height: 40,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              itemCount: chips.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (context, i) => chips[i],
+            ),
           ),
-        ),
         const SizedBox(height: 6),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
