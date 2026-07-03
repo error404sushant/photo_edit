@@ -49,10 +49,46 @@ const List<Color> kPalette = [
 ];
 
 const List<String> kStickers = [
-  '😀', '😂', '😍', '😎', '🥳', '😜', '🤩', '😇', '🥰', '😴',
-  '❤️', '🔥', '⭐', '✨', '💯', '🎉', '🎈', '🌈', '⚡', '💥',
-  '👍', '👏', '✌️', '🤘', '💪', '🙌', '🐶', '🐱', '🦄', '🌸',
-  '🍕', '🍩', '☕', '🏆', '🎵', '📸', '🚀', '🌙', '☀️', '🌊',
+  '😀',
+  '😂',
+  '😍',
+  '😎',
+  '🥳',
+  '😜',
+  '🤩',
+  '😇',
+  '🥰',
+  '😴',
+  '❤️',
+  '🔥',
+  '⭐',
+  '✨',
+  '💯',
+  '🎉',
+  '🎈',
+  '🌈',
+  '⚡',
+  '💥',
+  '👍',
+  '👏',
+  '✌️',
+  '🤘',
+  '💪',
+  '🙌',
+  '🐶',
+  '🐱',
+  '🦄',
+  '🌸',
+  '🍕',
+  '🍩',
+  '☕',
+  '🏆',
+  '🎵',
+  '📸',
+  '🚀',
+  '🌙',
+  '☀️',
+  '🌊',
 ];
 
 class EditorScreen extends StatefulWidget {
@@ -161,8 +197,9 @@ class _EditorScreenState extends State<EditorScreen> {
     try {
       // Let the frame without selection chrome paint first.
       await WidgetsBinding.instance.endOfFrame;
-      final boundary = _canvasKey.currentContext!.findRenderObject()!
-          as RenderRepaintBoundary;
+      final boundary =
+          _canvasKey.currentContext!.findRenderObject()!
+              as RenderRepaintBoundary;
       final logicalWidth = boundary.size.width;
       final targetWidth = edit.crop.width * _orientedWidth;
       final ratio = (targetWidth / logicalWidth).clamp(1.0, 8.0);
@@ -173,13 +210,16 @@ class _EditorScreenState extends State<EditorScreen> {
       await saveImageBytes(data!.buffer.asUint8List(), name);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Image exported — check your downloads')),
+          const SnackBar(
+            content: Text('Image exported — check your downloads'),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Export failed: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Export failed: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -201,7 +241,9 @@ class _EditorScreenState extends State<EditorScreen> {
               child: Center(
                 child: AspectRatio(
                   aspectRatio: _canvasAspect,
-                  child: _tool == Tool.crop ? _buildCropCanvas() : _buildCanvas(),
+                  child: _tool == Tool.crop
+                      ? _buildCropCanvas()
+                      : _buildCanvas(),
                 ),
               ),
             ),
@@ -214,6 +256,7 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   PreferredSizeWidget _buildAppBar() {
+    final compact = MediaQuery.sizeOf(context).width < 640;
     return AppBar(
       backgroundColor: const Color(0xFF16161C),
       leading: IconButton(
@@ -221,7 +264,10 @@ class _EditorScreenState extends State<EditorScreen> {
         tooltip: 'Close',
         onPressed: () => Navigator.of(context).pop(),
       ),
-      title: const Text('Photo Editor', style: TextStyle(fontSize: 16)),
+      title: compact
+          ? null
+          : const Text('Photo Editor', style: TextStyle(fontSize: 16)),
+      titleSpacing: 0,
       actions: [
         IconButton(
           icon: _enhancing
@@ -249,7 +295,9 @@ class _EditorScreenState extends State<EditorScreen> {
           onTapUp: (_) => setState(() => _comparing = false),
           onTapCancel: () => setState(() => _comparing = false),
           child: IconButton(
-            icon: Icon(_comparing ? Icons.visibility : Icons.visibility_outlined),
+            icon: Icon(
+              _comparing ? Icons.visibility : Icons.visibility_outlined,
+            ),
             tooltip: 'Hold to compare with original',
             onPressed: () {},
           ),
@@ -261,17 +309,29 @@ class _EditorScreenState extends State<EditorScreen> {
         ),
         Padding(
           padding: const EdgeInsets.only(right: 8),
-          child: FilledButton.icon(
-            onPressed: _saving ? null : _save,
-            icon: _saving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.download, size: 18),
-            label: const Text('Save'),
-          ),
+          child: compact
+              ? IconButton.filled(
+                  onPressed: _saving ? null : _save,
+                  tooltip: 'Save',
+                  icon: _saving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.download, size: 18),
+                )
+              : FilledButton.icon(
+                  onPressed: _saving ? null : _save,
+                  icon: _saving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.download, size: 18),
+                  label: const Text('Save'),
+                ),
         ),
       ],
     );
@@ -280,81 +340,84 @@ class _EditorScreenState extends State<EditorScreen> {
   // ---------------------------------------------------------------- canvas
 
   Widget _buildCanvas() {
-    return LayoutBuilder(builder: (context, constraints) {
-      final size = Size(constraints.maxWidth, constraints.maxHeight);
-      final showEdits = !_comparing;
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: RepaintBoundary(
-          key: _canvasKey,
-          child: Stack(
-            fit: StackFit.expand,
-            clipBehavior: Clip.hardEdge,
-            children: [
-              GestureDetector(
-                onTap: () => setState(() => _selectedItem = null),
-                child: CustomPaint(
-                  painter: FilteredImagePainter(
-                    image: widget.image,
-                    matrix: showEdits ? edit.colorMatrix : identityMatrix,
-                    blur: showEdits ? edit.adjustments[AdjustType.blur]! : 0,
-                    quarterTurns: edit.quarterTurns,
-                    flipH: edit.flipH,
-                    flipV: edit.flipV,
-                    crop: edit.crop,
-                  ),
-                ),
-              ),
-              if (showEdits) ...[
-                IgnorePointer(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = Size(constraints.maxWidth, constraints.maxHeight);
+        final showEdits = !_comparing;
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: RepaintBoundary(
+            key: _canvasKey,
+            child: Stack(
+              fit: StackFit.expand,
+              clipBehavior: Clip.hardEdge,
+              children: [
+                GestureDetector(
+                  onTap: () => setState(() => _selectedItem = null),
                   child: CustomPaint(
-                    painter: SpotsPainter(
+                    painter: FilteredImagePainter(
                       image: widget.image,
-                      globalMatrix: edit.colorMatrix,
-                      blur: edit.adjustments[AdjustType.blur]!,
+                      matrix: showEdits ? edit.colorMatrix : identityMatrix,
+                      blur: showEdits ? edit.adjustments[AdjustType.blur]! : 0,
                       quarterTurns: edit.quarterTurns,
                       flipH: edit.flipH,
                       flipV: edit.flipV,
                       crop: edit.crop,
-                      spots: edit.spots,
                     ),
                   ),
                 ),
-                IgnorePointer(
-                  child: CustomPaint(
-                    painter:
-                        VignettePainter(edit.adjustments[AdjustType.vignette]!),
-                  ),
-                ),
-                IgnorePointer(
-                  child: CustomPaint(
-                    painter: StrokesPainter(edit.strokes, _activeStroke),
-                  ),
-                ),
-                for (var i = 0; i < edit.items.length; i++)
-                  _buildOverlayItem(i, size),
-                if (_tool == Tool.draw) _buildDrawLayer(size),
-                if (_tool == Tool.selective && !_saving) ...[
+                if (showEdits) ...[
                   IgnorePointer(
                     child: CustomPaint(
-                      painter: SpotOutlinePainter(edit.spots, _selectedSpot),
+                      painter: SpotsPainter(
+                        image: widget.image,
+                        globalMatrix: edit.colorMatrix,
+                        blur: edit.adjustments[AdjustType.blur]!,
+                        quarterTurns: edit.quarterTurns,
+                        flipH: edit.flipH,
+                        flipV: edit.flipV,
+                        crop: edit.crop,
+                        spots: edit.spots,
+                      ),
                     ),
                   ),
-                  _buildSpotGestureLayer(size),
+                  IgnorePointer(
+                    child: CustomPaint(
+                      painter: VignettePainter(
+                        edit.adjustments[AdjustType.vignette]!,
+                      ),
+                    ),
+                  ),
+                  IgnorePointer(
+                    child: CustomPaint(
+                      painter: StrokesPainter(edit.strokes, _activeStroke),
+                    ),
+                  ),
+                  for (var i = 0; i < edit.items.length; i++)
+                    _buildOverlayItem(i, size),
+                  if (_tool == Tool.draw) _buildDrawLayer(size),
+                  if (_tool == Tool.selective && !_saving) ...[
+                    IgnorePointer(
+                      child: CustomPaint(
+                        painter: SpotOutlinePainter(edit.spots, _selectedSpot),
+                      ),
+                    ),
+                    _buildSpotGestureLayer(size),
+                  ],
                 ],
               ],
-            ],
+            ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 
   Widget _buildDrawLayer(Size size) {
     Offset norm(Offset p) => Offset(
-          (p.dx / size.width).clamp(0.0, 1.0),
-          (p.dy / size.height).clamp(0.0, 1.0),
-        );
+      (p.dx / size.width).clamp(0.0, 1.0),
+      (p.dy / size.height).clamp(0.0, 1.0),
+    );
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onPanStart: (d) => setState(() {
@@ -386,8 +449,10 @@ class _EditorScreenState extends State<EditorScreen> {
         final p = d.localPosition;
         for (var i = edit.spots.length - 1; i >= 0; i--) {
           final spot = edit.spots[i];
-          final center =
-              Offset(spot.pos.dx * size.width, spot.pos.dy * size.height);
+          final center = Offset(
+            spot.pos.dx * size.width,
+            spot.pos.dy * size.height,
+          );
           if ((p - center).distance <= spot.radius * size.shortestSide) {
             setState(() => _selectedSpot = i);
             return;
@@ -502,8 +567,7 @@ class _EditorScreenState extends State<EditorScreen> {
                     item.pos.dx.clamp(0.0, 1.0),
                     item.pos.dy.clamp(0.0, 1.0),
                   );
-                  item.scale =
-                      (_gestureBaseScale * d.scale).clamp(0.2, 6.0);
+                  item.scale = (_gestureBaseScale * d.scale).clamp(0.2, 6.0);
                   item.rotation = _gestureBaseRotation + d.rotation;
                 }),
                 child: content,
@@ -574,13 +638,17 @@ class _EditorScreenState extends State<EditorScreen> {
                               : Colors.white60,
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          tool.label,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: _tool == tool
-                                ? Colors.lightBlueAccent
-                                : Colors.white60,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            tool.label,
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: _tool == tool
+                                  ? Colors.lightBlueAccent
+                                  : Colors.white60,
+                            ),
                           ),
                         ),
                       ],
@@ -664,7 +732,9 @@ class _EditorScreenState extends State<EditorScreen> {
                       preset.name,
                       style: TextStyle(
                         fontSize: 11,
-                        color: selected ? Colors.lightBlueAccent : Colors.white70,
+                        color: selected
+                            ? Colors.lightBlueAccent
+                            : Colors.white70,
                       ),
                     ),
                   ],
@@ -678,18 +748,22 @@ class _EditorScreenState extends State<EditorScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                const Text('Strength',
-                    style: TextStyle(fontSize: 12, color: Colors.white70)),
+                const Text(
+                  'Strength',
+                  style: TextStyle(fontSize: 12, color: Colors.white70),
+                ),
                 Expanded(
                   child: Slider(
                     value: edit.filterStrength,
                     onChangeStart: (_) => _push(),
-                    onChanged: (v) => setState(
-                        () => edit = edit.copyWith(filterStrength: v)),
+                    onChanged: (v) =>
+                        setState(() => edit = edit.copyWith(filterStrength: v)),
                   ),
                 ),
-                Text('${(edit.filterStrength * 100).round()}%',
-                    style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                Text(
+                  '${(edit.filterStrength * 100).round()}%',
+                  style: const TextStyle(fontSize: 12, color: Colors.white70),
+                ),
               ],
             ),
           ),
@@ -741,11 +815,13 @@ class _EditorScreenState extends State<EditorScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(type.icon,
-                          size: 22,
-                          color: selected
-                              ? Colors.lightBlueAccent
-                              : Colors.white70),
+                      Icon(
+                        type.icon,
+                        size: 22,
+                        color: selected
+                            ? Colors.lightBlueAccent
+                            : Colors.white70,
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         type.label,
@@ -877,8 +953,10 @@ class _EditorScreenState extends State<EditorScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                const Text('Size',
-                    style: TextStyle(fontSize: 11, color: Colors.white70)),
+                const Text(
+                  'Size',
+                  style: TextStyle(fontSize: 11, color: Colors.white70),
+                ),
                 Expanded(
                   child: Slider(
                     value: spot.radius,
@@ -888,8 +966,10 @@ class _EditorScreenState extends State<EditorScreen> {
                     onChanged: (v) => setState(() => spot.radius = v),
                   ),
                 ),
-                const Text('Feather',
-                    style: TextStyle(fontSize: 11, color: Colors.white70)),
+                const Text(
+                  'Feather',
+                  style: TextStyle(fontSize: 11, color: Colors.white70),
+                ),
                 Expanded(
                   child: Slider(
                     value: spot.feather,
@@ -971,14 +1051,17 @@ class _EditorScreenState extends State<EditorScreen> {
       final canvas = Canvas(recorder);
       canvas.drawImageRect(
         widget.image,
-        Rect.fromLTWH(0, 0, widget.image.width.toDouble(),
-            widget.image.height.toDouble()),
+        Rect.fromLTWH(
+          0,
+          0,
+          widget.image.width.toDouble(),
+          widget.image.height.toDouble(),
+        ),
         const Rect.fromLTWH(0, 0, sample * 1.0, sample * 1.0),
         Paint()..filterQuality = FilterQuality.low,
       );
       final small = await recorder.endRecording().toImage(sample, sample);
-      final data =
-          await small.toByteData(format: ui.ImageByteFormat.rawRgba);
+      final data = await small.toByteData(format: ui.ImageByteFormat.rawRgba);
       small.dispose();
       final px = data!.buffer.asUint8List();
 
@@ -1006,8 +1089,10 @@ class _EditorScreenState extends State<EditorScreen> {
       // enhancement is visible.
       double exposure;
       if (median < 0.45) {
-        exposure =
-            (math.log(0.52 / math.max(median, 0.08)) / math.ln2).clamp(0.0, 0.5);
+        exposure = (math.log(0.52 / math.max(median, 0.08)) / math.ln2).clamp(
+          0.0,
+          0.5,
+        );
       } else if (median > 0.65) {
         exposure = (math.log(0.58 / median) / math.ln2).clamp(-0.3, 0.0);
       } else {
@@ -1044,7 +1129,8 @@ class _EditorScreenState extends State<EditorScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-                'AI Enhance applied ✨ — hold the eye icon to compare, tweak in Adjust, or undo'),
+              'AI Enhance applied ✨ — hold the eye icon to compare, tweak in Adjust, or undo',
+            ),
           ),
         );
       }
@@ -1092,50 +1178,56 @@ class _EditorScreenState extends State<EditorScreen> {
           ),
         ),
         const SizedBox(height: 6),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.rotate_90_degrees_ccw),
-              tooltip: 'Rotate left',
-              onPressed: () => _rotate(-1),
-            ),
-            IconButton(
-              icon: const Icon(Icons.rotate_90_degrees_cw_outlined),
-              tooltip: 'Rotate right',
-              onPressed: () => _rotate(1),
-            ),
-            IconButton(
-              icon: const Icon(Icons.flip),
-              tooltip: 'Flip horizontal',
-              onPressed: () => _flip(horizontal: true),
-            ),
-            IconButton(
-              icon: RotatedBox(
-                  quarterTurns: 1, child: const Icon(Icons.flip)),
-              tooltip: 'Flip vertical',
-              onPressed: () => _flip(horizontal: false),
-            ),
-            const SizedBox(width: 16),
-            OutlinedButton(
-              onPressed: () => setState(() {
-                _cropDraft = const Rect.fromLTWH(0, 0, 1, 1);
-                _cropAspect = null;
-              }),
-              child: const Text('Reset'),
-            ),
-            const SizedBox(width: 8),
-            FilledButton(
-              onPressed: () {
-                _push();
-                setState(() {
-                  edit = edit.copyWith(crop: _cropDraft);
-                  _tool = Tool.filters;
-                });
-              },
-              child: const Text('Apply'),
-            ),
-          ],
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.rotate_90_degrees_ccw),
+                tooltip: 'Rotate left',
+                onPressed: () => _rotate(-1),
+              ),
+              IconButton(
+                icon: const Icon(Icons.rotate_90_degrees_cw_outlined),
+                tooltip: 'Rotate right',
+                onPressed: () => _rotate(1),
+              ),
+              IconButton(
+                icon: const Icon(Icons.flip),
+                tooltip: 'Flip horizontal',
+                onPressed: () => _flip(horizontal: true),
+              ),
+              IconButton(
+                icon: RotatedBox(
+                  quarterTurns: 1,
+                  child: const Icon(Icons.flip),
+                ),
+                tooltip: 'Flip vertical',
+                onPressed: () => _flip(horizontal: false),
+              ),
+              const SizedBox(width: 16),
+              OutlinedButton(
+                onPressed: () => setState(() {
+                  _cropDraft = const Rect.fromLTWH(0, 0, 1, 1);
+                  _cropAspect = null;
+                }),
+                child: const Text('Reset'),
+              ),
+              const SizedBox(width: 8),
+              FilledButton(
+                onPressed: () {
+                  _push();
+                  setState(() {
+                    edit = edit.copyWith(crop: _cropDraft);
+                    _tool = Tool.filters;
+                  });
+                },
+                child: const Text('Apply'),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -1251,8 +1343,11 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
-  Widget _colorDot(Color color,
-      {required bool selected, required VoidCallback onTap}) {
+  Widget _colorDot(
+    Color color, {
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1274,8 +1369,8 @@ class _EditorScreenState extends State<EditorScreen> {
 
   OverlayItem? get _selected =>
       _selectedItem != null && _selectedItem! < edit.items.length
-          ? edit.items[_selectedItem!]
-          : null;
+      ? edit.items[_selectedItem!]
+      : null;
 
   Widget _textPanel() {
     final item = _selected?.kind == OverlayKind.text ? _selected : null;
@@ -1302,8 +1397,10 @@ class _EditorScreenState extends State<EditorScreen> {
               itemBuilder: (context, i) {
                 final font = kTextFonts[i];
                 return ChoiceChip(
-                  label: Text(font,
-                      style: GoogleFonts.getFont(font, fontSize: 13)),
+                  label: Text(
+                    font,
+                    style: GoogleFonts.getFont(font, fontSize: 13),
+                  ),
                   selected: item.fontFamily == font,
                   onSelected: (_) {
                     _push();
@@ -1464,10 +1561,9 @@ class _EditorScreenState extends State<EditorScreen> {
               onTap: () {
                 _push();
                 setState(() {
-                  edit.items.add(OverlayItem(
-                    kind: OverlayKind.sticker,
-                    text: kStickers[i],
-                  ));
+                  edit.items.add(
+                    OverlayItem(kind: OverlayKind.sticker, text: kStickers[i]),
+                  );
                   _selectedItem = edit.items.length - 1;
                 });
               },
